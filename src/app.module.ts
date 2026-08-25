@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 import { CommonModule } from './common/common.module';
 
 @Module({
@@ -19,11 +19,11 @@ import { CommonModule } from './common/common.module';
         type: 'postgres',
         host: config.get<string>('DB_HOST'),
         port: config.get<number>('DB_PORT'),
-        username: config.get<string>('DB_USERNAME'),
+        username: config.get<string>('DB_USER'),
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: config.get<boolean>('DB_SYNCHRONIZE'),
+        synchronize: config.get<boolean>('DB_SYNCHRONIZE') || true,
       }),
     }),
     MongooseModule.forRootAsync({
@@ -34,8 +34,10 @@ import { CommonModule } from './common/common.module';
       }),
     }),
     CommonModule,
+    UsersModule,
+    AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, ConfigService],
+  controllers: [],
+  providers: [ConfigService],
 })
 export class AppModule {}
