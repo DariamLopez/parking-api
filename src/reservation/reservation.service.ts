@@ -26,6 +26,9 @@ import {
   formatReservation,
   validationTimeRange,
 } from './utils/reservation.utils';
+import { type CreateResponse } from './interfaces/createResponse.interface';
+import { PaginatedResponse } from 'src/common/interfaces/paginated-response.interface';
+import { FormattedResponse } from './interfaces/formattedResponse';
 
 @Injectable()
 export class ReservationService {
@@ -36,7 +39,10 @@ export class ReservationService {
     private readonly parkingSpotService: ParkingSpotService,
     private readonly configService: ConfigService,
   ) {}
-  async create(createReservationDto: CreateReservationDto, user: User) {
+  async create(
+    createReservationDto: CreateReservationDto,
+    user: User,
+  ): Promise<CreateResponse> {
     const date = parseDateStr(createReservationDto.date);
     const startMinute = parseToMinutes(createReservationDto.startTime);
     const endMinute = parseToMinutes(createReservationDto.endTime);
@@ -68,7 +74,6 @@ export class ReservationService {
         `${createReservationDto.startTime}-${createReservationDto.endTime} by ${user.email}`,
     );
 
-    // spot withheld by design — revealed 60 min before start
     return {
       id: reservation.id,
       vehiclePlate: reservation.vehiclePlate,
@@ -80,7 +85,10 @@ export class ReservationService {
       createdAt: reservation.createdAt,
     };
   }
-  async findAll(paginationDto: ReservationPaginationDto, user: User) {
+  async findAll(
+    paginationDto: ReservationPaginationDto,
+    user: User,
+  ): Promise<PaginatedResponse<FormattedResponse>> {
     const query = this.reservationRepo.createQueryBuilder('r');
     const {
       date = undefined,
@@ -143,7 +151,7 @@ export class ReservationService {
       },
     };
   }
-  async findOne(id: string, user: User) {
+  async findOne(id: string, user: User): Promise<FormattedResponse> {
     const reservation = await this.reservationRepo.findOne({
       where: { id },
       relations: { user: true, spot: true },
@@ -159,7 +167,10 @@ export class ReservationService {
     }
     return formatReservation(reservation);
   }
-  async cancel(id: string, user: User) {
+  async cancel(
+    id: string,
+    user: User,
+  ): Promise<{ id: string; status: ReservationStatus; message: string }> {
     const reservation = await this.reservationRepo.findOne({
       where: { id },
       relations: { user: true, spot: true },
@@ -214,7 +225,7 @@ export class ReservationService {
     }
     return null;
   }
-  private validateCancelWindows(reservation: Reservation) {
+  private validateCancelWindows(reservation: Reservation): void {
     const { today, currentMinute } = getCurrentDayAndMinute();
     const reservationDate = new Date(reservation.date);
     const isToday = isSameDay(reservationDate, today);

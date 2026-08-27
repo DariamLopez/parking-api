@@ -113,6 +113,10 @@ export class ParkingSpotService {
     return this.parkingSpotRepository.remove(parkingSpot);
   }
 
+  /* async getCurrentOccupancy(): {
+
+  } */
+
   private handleDBErrors(error: any): never {
     if ((error as { code: string }).code === '23505') {
       throw new BadRequestException((error as { detail: string }).detail);

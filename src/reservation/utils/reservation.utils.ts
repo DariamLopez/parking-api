@@ -7,8 +7,7 @@ import {
   PARKING_OPEN_MINUTE,
 } from './time.utils';
 import { Reservation } from '../entities/reservation.entity';
-import { User } from 'src/users/entities/user.entity';
-import { ValidRoles } from 'src/common/enums/valid-roles.enum';
+import { FormattedResponse } from '../interfaces/formattedResponse';
 
 export function validationTimeRange(
   date: Date,
@@ -33,7 +32,7 @@ export function validationTimeRange(
     throw new BadRequestException('startTime must be in the future');
 }
 
-export function formatReservation(reservation: Reservation) {
+export function formatReservation(reservation: Reservation): FormattedResponse {
   const { spot, user: resUser, ...rest } = reservation;
   return {
     ...rest,

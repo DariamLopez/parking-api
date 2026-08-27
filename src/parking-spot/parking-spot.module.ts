@@ -5,9 +5,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ParkingSpot } from './entities/parking-spot.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { ReservationModule } from 'src/reservation/reservation.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ParkingSpot]), AuthModule, ConfigModule],
+  imports: [
+    TypeOrmModule.forFeature([ParkingSpot]),
+    AuthModule,
+    ConfigModule,
+    ReservationModule,
+  ],
   controllers: [ParkingSpotController],
   providers: [ParkingSpotService],
   exports: [ParkingSpotService],
