@@ -20,6 +20,9 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) {}
+  //Al registrar un usuario siempre se crea con el role 'client'
+  //Para cambiar el role se debe usar el endpoint de update de usersController
+  //Dicho endpoint solo está disponible para admins
   async register(registerDto: RegisterDto) {
     try {
       const { password, ...userData } = registerDto;
@@ -29,7 +32,7 @@ export class AuthService {
         password: bcrypt.hashSync(password, 10),
       });
       await this.userRepository.save(user);
-      const { password: _, ...userWithoutPassword } = user;
+      const { password: _pwd, ...userWithoutPassword } = user;
       return {
         ...userWithoutPassword,
       };
@@ -46,7 +49,7 @@ export class AuthService {
         id: true,
         email: true,
         password: true,
-        //roles: true, //pasar role en caso de necesitar en Front
+        roles: true,
       },
     });
     if (!user) {
@@ -55,7 +58,7 @@ export class AuthService {
     if (!bcrypt.compareSync(password, user.password)) {
       throw new BadRequestException('Invalid credentials');
     }
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _pwd, ...userWithoutPassword } = user;
     return {
       ...userWithoutPassword,
       token: this.getJwtToken({ id: user.id, email: user.email }),
@@ -74,8 +77,8 @@ export class AuthService {
     return token;
   }
   private handleDbError(error: any): never {
-    if (error.code === '23505') {
-      throw new BadRequestException(error.detail);
+    if ((error as { code: string }).code === '23505') {
+      throw new BadRequestException((error as { detail: string }).detail);
     }
     console.error(error);
     throw new InternalServerErrorException(

@@ -1,8 +1,11 @@
 import { ValidRoles } from 'src/common';
+import { Reservation } from 'src/reservation/entities/reservation.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -33,6 +36,11 @@ export class User {
     default: [ValidRoles.client],
   })
   roles: string[];
+
+  /* @OneToMany(() => Reservation, (reservation) => reservation.user, {
+    eager: true,
+  })
+  reservations: Reservation[]; */
 
   @CreateDateColumn()
   createdAt: Date;

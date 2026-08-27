@@ -5,6 +5,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CommonModule } from './common/common.module';
+import { ParkingSpotModule } from './parking-spot/parking-spot.module';
+import { ReservationModule } from './reservation/reservation.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { CommonModule } from './common/common.module';
     CommonModule,
     UsersModule,
     AuthModule,
+    ParkingSpotModule,
+    ReservationModule,
   ],
   controllers: [],
   providers: [ConfigService],

@@ -11,11 +11,11 @@ import { ValidRoles } from 'src/common';
 export class RegisterDto {
   @IsString()
   @MinLength(1)
-  name: string;
+  name!: string;
 
   @IsString()
   @IsEmail()
-  email: string;
+  email!: string;
 
   @IsString()
   @MinLength(6)
@@ -24,13 +24,9 @@ export class RegisterDto {
     message:
       'The password must have a Uppercase, lowercase letter and a number',
   })
-  password: string;
+  password!: string;
 
   @IsString()
   @IsOptional()
   phone?: string;
-
-  @IsOptional()
-  @IsEnum(ValidRoles)
-  role?: string;
 }
