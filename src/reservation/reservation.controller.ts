@@ -22,7 +22,7 @@ export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
 
   @Post()
-  @Auth()
+  @Auth(ValidRoles.client)
   create(
     @Body() createReservationDto: CreateReservationDto,
     @GetUser() user: User,

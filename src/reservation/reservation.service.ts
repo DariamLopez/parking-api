@@ -76,9 +76,8 @@ export class ReservationService {
       startTime: createReservationDto.startTime,
       endTime: createReservationDto.endTime,
       status: reservation.status,
+      spot: reservation.spot.code,
       createdAt: reservation.createdAt,
-      message:
-        'Your parking spot will be communicated 60 minutes before your reservation starts',
     };
   }
   async findAll(paginationDto: ReservationPaginationDto, user: User) {
@@ -123,9 +122,7 @@ export class ReservationService {
       this.configService.get<string>('PORT') +
       '/api';
     return {
-      data: reservations.map((reservation) =>
-        formatReservation(reservation, user),
-      ),
+      data: reservations.map((reservation) => formatReservation(reservation)),
       pagination: {
         limit,
         offset,
@@ -160,14 +157,13 @@ export class ReservationService {
     if (!isOwner && !isAdminOrEmployee) {
       throw new NotFoundException(`Reservation with ID ${id} not found`);
     }
-    return formatReservation(reservation, user);
+    return formatReservation(reservation);
   }
   async cancel(id: string, user: User) {
     const reservation = await this.reservationRepo.findOne({
       where: { id },
       relations: { user: true, spot: true },
     });
-
     if (!reservation)
       throw new NotFoundException(`Reservation with ID ${id} not found`);
     if (reservation.status === ReservationStatus.CANCELLED)
@@ -189,7 +185,11 @@ export class ReservationService {
     this.logger.log(
       `Reservation with ID ${id} has been cancelled by ${user.id}`,
     );
-    // this.defragment(reservation);
+    return {
+      id: reservation.id,
+      status: reservation.status,
+      message: 'Reservation cancelled successfully',
+    };
   }
   private async findAvailableSpot(
     date: Date,
@@ -218,17 +218,6 @@ export class ReservationService {
     const { today, currentMinute } = getCurrentDayAndMinute();
     const reservationDate = new Date(reservation.date);
     const isToday = isSameDay(reservationDate, today);
-    /* console.log({
-      isToday,
-      diffMinute: reservation.startMinute - currentMinute,
-      resMinute: reservation.startMinute,
-      currentMinute: currentMinute,
-    }); */
-    console.log({
-      isToday,
-      reservationDate,
-      today,
-    });
     // cancellation close 120 minutes before the reservation start time
     if (isToday && reservation.startMinute - currentMinute < 120) {
       throw new BadRequestException(
@@ -236,64 +225,86 @@ export class ReservationService {
       );
     }
   }
-  // private async defragment(cancelled: Reservation) {
-  /* async defragment(id: string) {
-    const cancelled = await this.reservationRepo.findOne({
-      where: { id },
-      relations: { spot: true },
-    });
-    if (!cancelled) {
-      throw new NotFoundException(`Reservation with ID ${id} not found`);
-    }
+  /* private async defragment(cancelled: Reservation): Promise<void> {
     const { today, currentMinute } = getCurrentDayAndMinute();
-    const lockMinute = currentMinute + 60; // reservation with 60 minutes or less to start cannot be modified
+    // reservations starting within 60 min are locked — spot already communicated
+    const lockMinute = currentMinute + 60;
 
-    // Reserva anterior: la que termina más cercano (o exacto) a cuando empieza la cancelada
+    const isToday = isSameDay(new Date(cancelled.date), today);
+
+    // last active reservation on the same spot that ends at or before the freed slot starts
     const beforeAdjacent = await this.reservationRepo
       .createQueryBuilder('r')
-      .leftJoinAndSelect('r.spot', 'spot')
       .where('r.spotId = :spotId', { spotId: cancelled.spot.id })
       .andWhere('r.status = :status', { status: ReservationStatus.ACTIVE })
       .andWhere('DATE(r.date) = DATE(:date)', { date: cancelled.date })
       .andWhere('r.endMinute <= :cancelledStart', {
         cancelledStart: cancelled.startMinute,
       })
-      .orderBy('r.endMinute', 'DESC') // La que termina más tarde (más cercana)
+      .orderBy('r.endMinute', 'DESC')
       .limit(1)
       .getOne();
 
-    // Reserva posterior: la que comienza más cercano (o exacto) a cuando termina la cancelada
+    // first active reservation on the same spot that starts at or after the freed slot ends
     const afterAdjacent = await this.reservationRepo
       .createQueryBuilder('r')
-      .leftJoinAndSelect('r.spot', 'spot')
       .where('r.spotId = :spotId', { spotId: cancelled.spot.id })
       .andWhere('r.status = :status', { status: ReservationStatus.ACTIVE })
       .andWhere('DATE(r.date) = DATE(:date)', { date: cancelled.date })
       .andWhere('r.startMinute >= :cancelledEnd', {
         cancelledEnd: cancelled.endMinute,
       })
-      .orderBy('r.startMinute', 'ASC') // La que comienza más temprano (más cercana)
+      .orderBy('r.startMinute', 'ASC')
       .limit(1)
       .getOne();
 
+    // real contiguous free window is wider than just the cancelled reservation
+    const freeStart = beforeAdjacent?.endMinute ?? cancelled.startMinute;
+    const freeEnd = afterAdjacent?.startMinute ?? cancelled.endMinute;
     const candidates = await this.reservationRepo
       .createQueryBuilder('r')
       .leftJoinAndSelect('r.spot', 'spot')
       .where('spot.id != :spotId', { spotId: cancelled.spot.id })
-      .andWhere('spot.code > :code', { code: cancelled.spot.code })
+      .andWhere(
+        'CAST(SUBSTRING(spot.code FROM 2) AS INTEGER) > CAST(SUBSTRING(:code FROM 2) AS INTEGER)',
+        { code: cancelled.spot.code },
+      )
       .andWhere('r.status = :status', { status: ReservationStatus.ACTIVE })
       .andWhere('DATE(r.date) = DATE(:date)', { date: cancelled.date })
-      .andWhere('r.startMinute >= :beforeEnd', {
-        beforeEnd: beforeAdjacent?.endMinute || cancelled.startMinute,
+      .andWhere('r.startMinute >= :freeStart', { freeStart })
+      .andWhere('r.endMinute <= :freeEnd', { freeEnd })
+      .andWhere('r.startMinute > :lockMinute', {
+        lockMinute: isToday ? lockMinute : 0,
       })
-      .andWhere('r.endMinute <= :afterStart', {
-        afterStart: afterAdjacent?.startMinute || cancelled.endMinute,
-      })
-      .orderBy('spot.code', 'ASC')
+      // // highest code first: empty least-priority spots before lower-numbered ones
+      .orderBy('CAST(SUBSTRING(spot.code FROM 2) AS INTEGER)', 'ASC')
       .getMany();
+
     if (candidates.length === 0) return;
-    
-    console.log(candidates);
-    return candidates;
+
+    for (const candidate of candidates) {
+      const conflicts = await this.reservationRepo
+        .createQueryBuilder('r')
+        .where('r.spotId = :spotId', { spotId: cancelled.spot.id })
+        .andWhere('r.status = :status', { status: ReservationStatus.ACTIVE })
+        .andWhere('DATE(r.date) = DATE(:date)', { date: cancelled.date })
+        .andWhere('r.startMinute < :endMinute', {
+          endMinute: candidate.endMinute,
+        })
+        .andWhere('r.endMinute > :startMinute', {
+          startMinute: candidate.startMinute,
+        })
+        .getCount();
+
+      if (conflicts === 0) {
+        const previousCode = candidate.spot.code;
+        candidate.spot = cancelled.spot;
+        await this.reservationRepo.save(candidate);
+        this.logger.log(
+          `Defrag: reservation ${candidate.id} moved from ${previousCode} to ${cancelled.spot.code}`,
+        );
+        break;
+      }
+    }
   } */
 }

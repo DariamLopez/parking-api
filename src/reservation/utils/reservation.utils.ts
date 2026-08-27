@@ -33,26 +33,20 @@ export function validationTimeRange(
     throw new BadRequestException('startTime must be in the future');
 }
 
-export function formatReservation(reservation: Reservation, user: User) {
-  const { today, currentMinute } = getCurrentDayAndMinute();
-  const isAdminOrEmployee =
-    user.roles.includes(ValidRoles.admin) ||
-    user.roles.includes(ValidRoles.employee);
-
-  const reservationDate = new Date(reservation.date);
-  const isToday = isSameDay(today, reservationDate);
-
-  // spot revealed 60 minutes before start
-  const spotVisible =
-    isAdminOrEmployee ||
-    (isToday && reservation.startMinute - currentMinute <= 60);
-
+export function formatReservation(reservation: Reservation) {
   const { spot, user: resUser, ...rest } = reservation;
   return {
     ...rest,
-    startMinute: minutesToTime(reservation.startMinute),
-    endMinute: minutesToTime(reservation.endMinute),
-    user: { id: resUser.id, name: resUser.name, email: resUser.email },
-    ...(spotVisible && spot ? { spot: { id: spot.id, code: spot.code } } : {}),
+    startTime: minutesToTime(reservation.startMinute),
+    endTime: minutesToTime(reservation.endMinute),
+    user: {
+      id: resUser.id,
+      name: resUser.name,
+      email: resUser.email,
+    },
+    spot: {
+      id: spot.id,
+      code: spot.code,
+    },
   };
 }
