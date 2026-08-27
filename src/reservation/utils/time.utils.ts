@@ -14,26 +14,26 @@ export function parseToMinutes(time: string): number {
 }
 
 /**
- * Parses a date string in the format "DD/MM/YYYY" and returns a Date object in UTC.
+ * Parses a date string in the format "DD/MM/YYYY" and returns a Date object in local timezone.
  */
 export function parseDateStr(dateStr: string): Date {
   const [day, month, year] = dateStr.split('/');
+  // Sin la Z al final, usa zona horaria local en lugar de UTC
   return new Date(
-    `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00Z`,
+    `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`,
   );
 }
 
 /**
- * Returns the current day (at midnight UTC) and the current minute of the day.
+ * Returns the current day (at midnight local timezone) and the current minute of the day.
  */
 export function getCurrentDayAndMinute(): {
   today: Date;
   currentMinute: number;
 } {
   const now = new Date();
-  const today = new Date(
-    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()),
-  );
+  // Crear fecha en zona horaria local, no UTC
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentMinute = now.getHours() * 60 + now.getMinutes();
   return { today, currentMinute };
 }
@@ -50,5 +50,9 @@ export function minutesToTime(minutes: number): string {
 }
 
 export function isSameDay(a: Date, b: Date): boolean {
-  return a.getTime() === b.getTime();
+  return (
+    a.getUTCFullYear() === b.getUTCFullYear() &&
+    a.getUTCMonth() === b.getUTCMonth() &&
+    a.getUTCDate() === b.getUTCDate()
+  );
 }

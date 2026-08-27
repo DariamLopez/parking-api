@@ -2,7 +2,7 @@ import { IsDateString, IsString, Matches } from 'class-validator';
 
 export class CreateReservationDto {
   @IsString()
-  @Matches(/^[A-Z0-9]{4,8}$/, { message: 'Invalid vehicle plate format' }) //solo permite cadenas de 4 a 8 caracteres con Numeros del 0 al 9 y letras mayusulas
+  @Matches(/^[A-Z0-9-]{4,8}$/, { message: 'Invalid vehicle plate format' }) //permite cadenas de 4 a 8 caracteres con Numeros del 0 al 9, letras mayusulas y guión
   vehiclePlate!: string;
 
   @IsString()
