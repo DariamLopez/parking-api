@@ -14,6 +14,11 @@ import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-response.interface';
 import { ConfigService } from '@nestjs/config';
 import { ParkingPaginationDto } from './dto/parking-pagination.dto';
+import { getCurrentDayAndMinute, minutesToTime } from 'src/common/utils/time.utils';
+import {
+  Reservation,
+  ReservationStatus,
+} from 'src/reservation/entities/reservation.entity';
 
 @Injectable()
 export class ParkingSpotService {
@@ -21,6 +26,8 @@ export class ParkingSpotService {
   constructor(
     @InjectRepository(ParkingSpot)
     private readonly parkingSpotRepository: Repository<ParkingSpot>,
+    @InjectRepository(Reservation)
+    private readonly reservationRepository: Repository<Reservation>,
     private readonly configService: ConfigService,
   ) {}
   async create(
@@ -113,9 +120,35 @@ export class ParkingSpotService {
     return this.parkingSpotRepository.remove(parkingSpot);
   }
 
-  /* async getCurrentOccupancy(): {
+  async getCurrentOccupancy() {
+    const { today, currentMinute } = getCurrentDayAndMinute();
+    const activeSpots = await this.findActiveSpots();
 
-  } */
+    const occupiedNow = await this.reservationRepository
+      .createQueryBuilder('r')
+      .leftJoinAndSelect('r.spot', 'spot')
+      .where('r.status = :status', { status: ReservationStatus.ACTIVE })
+      .andWhere('DATE(r.date) = :today', { today })
+      .andWhere('r.startMinute <= :currentMinute', { currentMinute })
+      .andWhere('r.endMinute > :currentMinute', { currentMinute })
+      .getMany();
+
+    const occupiedIds = new Set(occupiedNow.map((r) => r.spot.id));
+    const total = activeSpots.length;
+    const occupied = occupiedIds.size;
+
+    return {
+      total,
+      occupied,
+      available: total - occupied,
+      occupancyRate: `${total > 0 ? Math.round((occupied / total) * 100) : 0}%`,
+      currentTime: minutesToTime(currentMinute),
+      spots: activeSpots.map((s) => ({
+        code: s.code,
+        status: occupiedIds.has(s.id) ? 'occupied' : 'available',
+      })),
+    };
+  }
 
   private handleDBErrors(error: any): never {
     if ((error as { code: string }).code === '23505') {

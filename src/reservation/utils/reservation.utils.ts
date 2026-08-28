@@ -5,7 +5,7 @@ import {
   minutesToTime,
   PARKING_CLOSE_MINUTE,
   PARKING_OPEN_MINUTE,
-} from './time.utils';
+} from 'src/common/utils/time.utils';
 import { Reservation } from '../entities/reservation.entity';
 import { FormattedResponse } from '../interfaces/formattedResponse';
 

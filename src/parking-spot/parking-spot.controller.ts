@@ -34,16 +34,16 @@ export class ParkingSpotController {
     return this.parkingSpotService.findAll(paginationDto);
   }
 
+  @Get('occupancy')
+  @Auth(ValidRoles.admin, ValidRoles.employee)
+  occupancy() {
+    return this.parkingSpotService.getCurrentOccupancy();
+  }
+
   @Get(':id')
   @Auth(ValidRoles.admin, ValidRoles.employee)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.parkingSpotService.findOne(id);
-  }
-
-  @Get('occupancy')
-  @Auth(ValidRoles.admin, ValidRoles.employee)
-  occupancy() {
-    // return this.parkingSpotService.getCurrentOccupancy();
   }
 
   @Put(':id')

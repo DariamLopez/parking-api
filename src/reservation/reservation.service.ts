@@ -17,7 +17,7 @@ import {
   isSameDay,
   parseDateStr,
   parseToMinutes,
-} from './utils/time.utils';
+} from 'src/common/utils/time.utils';
 import { ParkingSpot } from 'src/parking-spot/entities/parking-spot.entity';
 import { ReservationPaginationDto } from './dto/reservation-pagination.dto';
 import { ValidRoles } from 'src/common';
