@@ -49,3 +49,37 @@ export function formatReservation(reservation: Reservation): FormattedResponse {
     },
   };
 }
+export function validateCancelWindows(reservation: Reservation): void {
+  const { today, currentMinute } = getCurrentDayAndMinute();
+  const reservationDate = new Date(reservation.date);
+  const isToday = isSameDay(reservationDate, today);
+  console.log({
+    resDate: new Date(reservation.date).getTime(),
+    today: today.getTime(),
+  });
+  if (new Date(reservation.date).getTime() < today.getTime())
+    throw new BadRequestException("You can't cancel reservations in the past");
+  // cancellation close 120 minutes before the reservation start time
+  if (isToday && reservation.startMinute - currentMinute < 120) {
+    throw new BadRequestException(
+      'Reservations can only be cancelled up to 2 hours before start time',
+    );
+  }
+}
+export function validateArrivedWindows(reservation: Reservation): void {
+  const { today, currentMinute } = getCurrentDayAndMinute();
+  const reservationDate = new Date(reservation.date);
+  const isToday = isSameDay(reservationDate, today);
+  console.log({
+    currentMinute,
+    reservationStartMinute: reservation.startMinute,
+  });
+  if (
+    !isToday ||
+    reservation.startMinute > currentMinute ||
+    reservation.endMinute <= currentMinute
+  )
+    throw new BadRequestException(
+      'Reservations can only be marked as arrived on the same day, after the start time and before the end time',
+    );
+}

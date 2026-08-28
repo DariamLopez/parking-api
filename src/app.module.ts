@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { CommonModule } from './common/common.module';
 import { ParkingSpotModule } from './parking-spot/parking-spot.module';
 import { ReservationModule } from './reservation/reservation.module';
+import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ReservationModule } from './reservation/reservation.module';
     AuthModule,
     ParkingSpotModule,
     ReservationModule,
+    LogsModule,
   ],
   controllers: [],
   providers: [ConfigService],

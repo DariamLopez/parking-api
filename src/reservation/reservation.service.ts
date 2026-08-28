@@ -24,6 +24,8 @@ import { ValidRoles } from 'src/common';
 import { ConfigService } from '@nestjs/config';
 import {
   formatReservation,
+  validateArrivedWindows,
+  validateCancelWindows,
   validationTimeRange,
 } from './utils/reservation.utils';
 import { type CreateResponse } from './interfaces/createResponse.interface';
@@ -177,9 +179,12 @@ export class ReservationService {
     });
     if (!reservation)
       throw new NotFoundException(`Reservation with ID ${id} not found`);
-    if (reservation.status === ReservationStatus.CANCELLED)
+    if (
+      reservation.status === ReservationStatus.CANCELLED ||
+      reservation.status === ReservationStatus.DONE
+    )
       throw new BadRequestException(
-        `Reservation with ID ${id} is already cancelled`,
+        `Reservations with status ${reservation.status} can't be cancelled`,
       );
     const isAdmin = user.roles.includes(ValidRoles.admin);
     if (!isAdmin && reservation.user.id !== user.id) {
@@ -188,7 +193,7 @@ export class ReservationService {
       );
     }
 
-    this.validateCancelWindows(reservation);
+    validateCancelWindows(reservation);
 
     reservation.status = ReservationStatus.CANCELLED;
     await this.reservationRepo.save(reservation);
@@ -200,6 +205,55 @@ export class ReservationService {
       id: reservation.id,
       status: reservation.status,
       message: 'Reservation cancelled successfully',
+    };
+  }
+  async arrived(id: string, user: User) {
+    const reservation = await this.reservationRepo.findOne({
+      where: { id },
+      relations: { user: true, spot: true },
+    });
+    if (!reservation) {
+      throw new NotFoundException(`Reservation with Id ${id} not found`);
+    }
+    if (reservation.status !== ReservationStatus.ACTIVE)
+      throw new BadRequestException(
+        `The reservations with status ${reservation.status} can't be marked as arrived`,
+      );
+    validateArrivedWindows(reservation);
+    reservation.status = ReservationStatus.ARRIVED;
+    await this.reservationRepo.save(reservation);
+
+    this.logger.log(
+      `Reservation with ID ${id} has been marked as arrived by ${user.id}`,
+    );
+    return {
+      id: reservation.id,
+      status: reservation.status,
+      message: 'Reservation marked as arrived successfully',
+    };
+  }
+  async done(id: string, user: User) {
+    const reservation = await this.reservationRepo.findOne({
+      where: { id },
+      relations: { user: true, spot: true },
+    });
+    if (!reservation) {
+      throw new NotFoundException(`Reservation with Id ${id} not found`);
+    }
+    if (reservation.status !== ReservationStatus.ARRIVED)
+      throw new BadRequestException(
+        `The reservations with status ${reservation.status} can't be marked as done`,
+      );
+    reservation.status = ReservationStatus.DONE;
+    await this.reservationRepo.save(reservation);
+
+    this.logger.log(
+      `Reservation with ID ${id} has been marked as done by ${user.id}`,
+    );
+    return {
+      id: reservation.id,
+      status: reservation.status,
+      message: 'Reservation marked as done successfully',
     };
   }
   private async findAvailableSpot(
@@ -224,17 +278,6 @@ export class ReservationService {
       }
     }
     return null;
-  }
-  private validateCancelWindows(reservation: Reservation): void {
-    const { today, currentMinute } = getCurrentDayAndMinute();
-    const reservationDate = new Date(reservation.date);
-    const isToday = isSameDay(reservationDate, today);
-    // cancellation close 120 minutes before the reservation start time
-    if (isToday && reservation.startMinute - currentMinute < 120) {
-      throw new BadRequestException(
-        'Reservations can only be cancelled up to 2 hours before start time',
-      );
-    }
   }
   /* private async defragment(cancelled: Reservation): Promise<void> {
     const { today, currentMinute } = getCurrentDayAndMinute();

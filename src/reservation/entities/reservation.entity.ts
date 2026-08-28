@@ -10,6 +10,8 @@ import {
 
 export enum ReservationStatus {
   ACTIVE = 'active',
+  ARRIVED = 'arrived',
+  DONE = 'done',
   CANCELLED = 'cancelled',
 }
 @Entity('reservations')
