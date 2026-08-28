@@ -12,6 +12,7 @@ export enum LogType {
   USER_UPDATED = 'user_updated',
   USER_REGISTERED = 'user_registered',
   OCCUPANCY_CHECKED = 'occupancy_checked',
+  SEED_EXECUTED = 'seed_executed',
 }
 @Schema({ timestamps: true })
 export class ActivityLog {

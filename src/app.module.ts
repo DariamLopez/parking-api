@@ -8,6 +8,7 @@ import { CommonModule } from './common/common.module';
 import { ParkingSpotModule } from './parking-spot/parking-spot.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { LogsModule } from './logs/logs.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { LogsModule } from './logs/logs.module';
     ParkingSpotModule,
     ReservationModule,
     LogsModule,
+    SeedModule,
   ],
   controllers: [],
   providers: [ConfigService],
