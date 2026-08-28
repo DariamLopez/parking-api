@@ -12,12 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Reservation, ReservationStatus } from './entities/reservation.entity';
 import { Repository } from 'typeorm';
 import { ParkingSpotService } from 'src/parking-spot/parking-spot.service';
-import {
-  getCurrentDayAndMinute,
-  isSameDay,
-  parseDateStr,
-  parseToMinutes,
-} from 'src/common/utils/time.utils';
+import { parseDateStr, parseToMinutes } from 'src/common/utils/time.utils';
 import { ParkingSpot } from 'src/parking-spot/entities/parking-spot.entity';
 import { ReservationPaginationDto } from './dto/reservation-pagination.dto';
 import { ValidRoles } from 'src/common';
@@ -31,6 +26,8 @@ import {
 import { type CreateResponse } from './interfaces/createResponse.interface';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-response.interface';
 import { FormattedResponse } from './interfaces/formattedResponse';
+import { LogsService } from 'src/logs/logs.service';
+import { LogType } from 'src/logs/shemas/activity-log.shema';
 
 @Injectable()
 export class ReservationService {
@@ -40,6 +37,7 @@ export class ReservationService {
     private readonly reservationRepo: Repository<Reservation>,
     private readonly parkingSpotService: ParkingSpotService,
     private readonly configService: ConfigService,
+    private readonly logService: LogsService,
   ) {}
   async create(
     createReservationDto: CreateReservationDto,
@@ -75,6 +73,14 @@ export class ReservationService {
       `Reservation created: ${createReservationDto.vehiclePlate} on ${createReservationDto.date} ` +
         `${createReservationDto.startTime}-${createReservationDto.endTime} by ${user.email}`,
     );
+
+    await this.logService.log(LogType.RESERVATION_CREATED, user.id, {
+      spotCode: availableSpot.code,
+      vehiclePlate: createReservationDto.vehiclePlate,
+      date: createReservationDto.date,
+      startTime: createReservationDto.startTime,
+      endTime: createReservationDto.endTime,
+    });
 
     return {
       id: reservation.id,
@@ -181,7 +187,8 @@ export class ReservationService {
       throw new NotFoundException(`Reservation with ID ${id} not found`);
     if (
       reservation.status === ReservationStatus.CANCELLED ||
-      reservation.status === ReservationStatus.DONE
+      reservation.status === ReservationStatus.DONE ||
+      reservation.status === ReservationStatus.ARRIVED
     )
       throw new BadRequestException(
         `Reservations with status ${reservation.status} can't be cancelled`,
@@ -201,6 +208,10 @@ export class ReservationService {
     this.logger.log(
       `Reservation with ID ${id} has been cancelled by ${user.id}`,
     );
+
+    await this.logService.log(LogType.RESERVATION_CANCELLED, user.id, {
+      reservationId: id,
+    });
     return {
       id: reservation.id,
       status: reservation.status,
@@ -226,6 +237,9 @@ export class ReservationService {
     this.logger.log(
       `Reservation with ID ${id} has been marked as arrived by ${user.id}`,
     );
+    await this.logService.log(LogType.RESERVATION_ARRIVED, user.id, {
+      reservationId: id,
+    });
     return {
       id: reservation.id,
       status: reservation.status,
@@ -250,6 +264,9 @@ export class ReservationService {
     this.logger.log(
       `Reservation with ID ${id} has been marked as done by ${user.id}`,
     );
+    await this.logService.log(LogType.RESERVATION_DONE, user.id, {
+      reservationId: id,
+    });
     return {
       id: reservation.id,
       status: reservation.status,
@@ -267,7 +284,9 @@ export class ReservationService {
       const overlapping = await this.reservationRepo
         .createQueryBuilder('r')
         .where('r.spotId = :spotId', { spotId: spot.id })
-        .andWhere('r.status = :status', { status: ReservationStatus.ACTIVE })
+        .andWhere('r.status IN (:...statuses)', {
+          statuses: [ReservationStatus.ACTIVE, ReservationStatus.ARRIVED],
+        })
         .andWhere('DATE(r.date) = :date', { date })
         .andWhere('r.startMinute < :endMinute', { endMinute })
         .andWhere('r.endMinute > :startMinute', { startMinute })

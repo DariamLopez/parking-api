@@ -3,13 +3,11 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Query,
   ParseUUIDPipe,
   Put,
-  ParseBoolPipe,
 } from '@nestjs/common';
 import { ParkingSpotService } from './parking-spot.service';
 import { CreateParkingSpotDto } from './dto/create-parking-spot.dto';

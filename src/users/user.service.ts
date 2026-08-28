@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -11,6 +13,8 @@ import { Repository } from 'typeorm';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ConfigService } from '@nestjs/config';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-response.interface';
+import { LogsService } from 'src/logs/logs.service';
+import { LogType } from 'src/logs/shemas/activity-log.shema';
 
 @Injectable()
 export class UserService {
@@ -19,6 +23,8 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => LogsService))
+    private readonly logService: LogsService,
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
@@ -75,14 +81,25 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async update(id: string, data: Partial<User>): Promise<User> {
+  async update(
+    id: string,
+    data: Partial<User>,
+    adminUser: User,
+  ): Promise<User> {
     const user = await this.findById(id);
     // console.log(data);
     if (!user) throw new NotFoundException(`User ${id} not found`);
-    Object.assign(user, data);
+    const updatedUser = new User();
+    Object.assign(updatedUser, user, data);
+
     try {
-      const response = await this.userRepository.save(user);
-      return response;
+      await this.userRepository.update(id, updatedUser);
+      //console.log('user:', user);
+      await this.logService.log(LogType.USER_UPDATED, adminUser.id, {
+        oldData: { ...user },
+        changes: updatedUser,
+      });
+      return updatedUser;
     } catch (error) {
       // console.log(error);
       this.handleDBErrors(error);

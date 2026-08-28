@@ -10,11 +10,13 @@ import { UpdateParkingSpotDto } from './dto/update-parking-spot.dto';
 import { ParkingSpot } from './entities/parking-spot.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-response.interface';
 import { ConfigService } from '@nestjs/config';
 import { ParkingPaginationDto } from './dto/parking-pagination.dto';
-import { getCurrentDayAndMinute, minutesToTime } from 'src/common/utils/time.utils';
+import {
+  getCurrentDayAndMinute,
+  minutesToTime,
+} from 'src/common/utils/time.utils';
 import {
   Reservation,
   ReservationStatus,
@@ -127,7 +129,9 @@ export class ParkingSpotService {
     const occupiedNow = await this.reservationRepository
       .createQueryBuilder('r')
       .leftJoinAndSelect('r.spot', 'spot')
-      .where('r.status = :status', { status: ReservationStatus.ACTIVE })
+      .where('r.status IN (:...statuses)', {
+        statuses: [ReservationStatus.ACTIVE, ReservationStatus.ARRIVED],
+      })
       .andWhere('DATE(r.date) = :today', { today })
       .andWhere('r.startMinute <= :currentMinute', { currentMinute })
       .andWhere('r.endMinute > :currentMinute', { currentMinute })

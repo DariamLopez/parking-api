@@ -16,7 +16,6 @@ import { ValidRoles } from 'src/common';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
 import { ReservationPaginationDto } from './dto/reservation-pagination.dto';
-import { ReservationStatus } from './entities/reservation.entity';
 
 @Controller('reservation')
 export class ReservationController {
@@ -31,13 +30,13 @@ export class ReservationController {
     return this.reservationService.create(createReservationDto, user);
   }
 
-  @Get('arrived/:id')
+  @Patch('arrived/:id')
   @Auth(ValidRoles.admin, ValidRoles.employee)
   arrived(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: User) {
     return this.reservationService.arrived(id, user);
   }
 
-  @Get('done/:id')
+  @Patch('done/:id')
   @Auth(ValidRoles.admin, ValidRoles.employee)
   done(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: User) {
     return this.reservationService.done(id, user);
