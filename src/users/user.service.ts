@@ -87,21 +87,26 @@ export class UserService {
     adminUser: User,
   ): Promise<User> {
     const user = await this.findById(id);
-    // console.log(data);
     if (!user) throw new NotFoundException(`User ${id} not found`);
-    const updatedUser = new User();
-    Object.assign(updatedUser, user, data);
+
+    const oldData = { ...user };
+    Object.assign(user, data);
 
     try {
-      await this.userRepository.update(id, updatedUser);
-      //console.log('user:', user);
+      await this.userRepository.save(user);
+
       await this.logService.log(LogType.USER_UPDATED, adminUser.id, {
-        oldData: { ...user },
-        changes: updatedUser,
+        oldData,
+        changes: user,
       });
+      const updatedUser = {
+        ...user,
+        phone: user.phone == undefined ? oldData.phone : user.phone,
+        email: user.email == undefined ? oldData.email : user.email,
+        name: user.name == undefined ? oldData.name : user.name,
+      };
       return updatedUser;
     } catch (error) {
-      // console.log(error);
       this.handleDBErrors(error);
     }
   }
@@ -113,6 +118,9 @@ export class UserService {
 
   private handleDBErrors(error: any): never {
     if ((error as { code: string }).code === '23505') {
+      throw new BadRequestException((error as { detail: string }).detail);
+    }
+    if ((error as { code: string }).code === '22P02') {
       throw new BadRequestException((error as { detail: string }).detail);
     }
     this.logger.error(error);

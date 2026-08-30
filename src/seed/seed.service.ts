@@ -6,7 +6,6 @@ import { ParkingSpot } from 'src/parking-spot/entities/parking-spot.entity';
 import { ValidRoles } from 'src/common';
 import * as bcrypt from 'bcryptjs';
 import { LogsService } from 'src/logs/logs.service';
-import { LogType } from 'src/logs/shemas/activity-log.shema';
 import { Reservation } from 'src/reservation/entities/reservation.entity';
 
 const SEED_USERS = [
@@ -44,10 +43,7 @@ export class SeedService {
     private readonly loggerService: LogsService,
   ) {}
 
-  async runSeed(user: User) {
-    await this.loggerService.log(LogType.SEED_EXECUTED, user.id, {
-      message: 'Seed executed successfully',
-    });
+  async runSeed() {
     await this.deleteTables();
     await this.seedUsers();
     await this.seedParkingSpots();

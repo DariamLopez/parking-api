@@ -10,6 +10,7 @@ import { UpdateParkingSpotDto } from './dto/update-parking-spot.dto';
 import { ParkingSpot } from './entities/parking-spot.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-response.interface';
 import { ConfigService } from '@nestjs/config';
 import { ParkingPaginationDto } from './dto/parking-pagination.dto';
