@@ -1,98 +1,239 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Parking API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+RESTful API for parking management, built with NestJS, PostgreSQL and MongoDB.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Tech Stack
 
-## Description
+- **Framework**: NestJS + Express
+- **Language**: TypeScript
+- **Main database**: PostgreSQL + TypeORM
+- **Logs database**: MongoDB + Mongoose
+- **Authentication**: JWT (JSON Web Tokens)
+- **Authorization**: Role-based access control (admin, employee, client)
+- **Testing**: Jest + Supertest (e2e)
+- **Containers**: Docker + Docker Compose
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Prerequisites
 
-## Project setup
+- Node.js >= 18
+- Docker and Docker Compose
+- Yarn
+
+## Installation & Setup
+
+### 1. Clone the repository
 
 ```bash
-$ yarn install
+git clone https://github.com/DariamLopez/parking-api.git
+cd parking-api
 ```
 
-## Compile and run the project
+### 2. Install dependencies
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+yarn install
 ```
 
-## Run tests
+### 3. Configure environment variables
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+cp .env.example .env
 ```
 
-## Deployment
+Edit `.env` with your values. See [Environment Variables](#environment-variables) section.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 4. Start the databases
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+docker compose up -d
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+This starts:
+- **PostgreSQL** on the configured port (default 5432), with `parking_db` and `parking_test_db` databases
+- **MongoDB** on the configured port (default 27017)
 
-## Resources
+### 5. Start the server
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+# Development (with hot-reload)
+yarn start:dev
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Production
+yarn build
+yarn start:prod
+```
 
-## Support
+The server will be available at `http://localhost:3000/api`
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### 6. Load initial data (seed)
 
-## Stay in touch
+```bash
+POST http://localhost:3000/api/seed
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+The seed creates:
+- 1 **admin** user: `admin@parking.com` / `Admin1234!`
+- 1 **employee** user: `employee@parking.com` / `Admin1234!`
+- 1 **client** user: `client@parking.com` / `Admin1234!`
+- 20 parking spots (P001–P020)
 
-## License
+> ⚠️ The seed is only available in `development` and `test` environments. It deletes all existing data before inserting.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Environment Variables
+
+| Variable | Description | Example |
+|---|---|---|
+| `PORT` | Server port | `3000` |
+| `API_HOST` | API host | `http://localhost` |
+| `NODE_ENV` | Runtime environment | `development` |
+| `DB_HOST` | PostgreSQL host | `localhost` |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `DB_USER` | PostgreSQL user | `parking_user` |
+| `DB_PASSWORD` | PostgreSQL password | `parking_pass` |
+| `DB_NAME` | Database name | `parking_db` |
+| `TEST_DB_NAME` | Test database name | `parking_test_db` |
+| `MONGO_HOST` | MongoDB host | `localhost` |
+| `MONGO_PORT` | MongoDB port | `27017` |
+| `MONGO_USER` | MongoDB user | `parking_user` |
+| `MONGO_PASSWORD` | MongoDB password | `parking_pass` |
+| `MONGO_DB` | Logs database name | `parking_logs` |
+| `JWT_SECRET` | JWT secret key | `super_secret_key` |
+
+## API Endpoints
+
+All endpoints are prefixed with `/api`.
+
+### Authentication
+
+| Method | Route | Access | Description |
+|---|---|---|---|
+| POST | `/api/auth/register` | Public | Register a new user (default role: client) |
+| POST | `/api/auth/login` | Public | Log in, returns JWT token |
+| GET | `/api/auth/check-auth-status` | Authenticated | Verify and renew token |
+
+### Users
+
+| Method | Route | Required role | Description |
+|---|---|---|---|
+| GET | `/api/users` | admin | List all users (paginated) |
+| GET | `/api/users/me` | Authenticated | View own profile |
+| GET | `/api/users/:id` | admin | Get user by ID |
+| PUT | `/api/users/:id` | admin | Update user details |
+| DELETE | `/api/users/:id` | admin | Delete user |
+
+### Parking Spots
+
+| Method | Route | Required role | Description |
+|---|---|---|---|
+| GET | `/api/parking-spot` | admin, employee | List spots (paginated, filterable by `isActive`) |
+| GET | `/api/parking-spot/occupancy` | admin, employee | Get current parking occupancy |
+| GET | `/api/parking-spot/:id` | admin, employee | Get spot by ID |
+| POST | `/api/parking-spot` | admin | Create new spot |
+| PUT | `/api/parking-spot/:id` | admin | Update spot |
+| DELETE | `/api/parking-spot/:id` | admin | Delete spot |
+
+### Reservations
+
+| Method | Route | Required role | Description |
+|---|---|---|---|
+| POST | `/api/reservation` | client | Create a reservation |
+| GET | `/api/reservation` | Authenticated | List reservations (clients see only their own) |
+| GET | `/api/reservation/:id` | Authenticated | Get reservation by ID |
+| DELETE | `/api/reservation/:id` | client, admin | Cancel reservation (up to 2h before start) |
+| PATCH | `/api/reservation/arrived/:id` | admin, employee | Mark vehicle as arrived |
+| PATCH | `/api/reservation/done/:id` | admin, employee | Mark vehicle as departed |
+
+**Date and time format for reservations:**
+- `date`: `dd/mm/yyyy` (e.g. `04/09/2026`)
+- `startTime` / `endTime`: `h:mm` in 24h format (e.g. `14:30`)
+
+**Business rules:**
+- The assigned spot is returned in the reservation creation response
+- Reservations can only be cancelled up to **2 hours before** the start time
+- A reservation with status `arrived` or `done` cannot be cancelled
+- Status flow: `active` → `arrived` → `done` / `cancelled`
+
+### Logs
+
+| Method | Route | Required role | Description |
+|---|---|---|---|
+| GET | `/api/logs` | admin | View activity logs (filterable by `type`, `userId`) |
+
+**Registered log types:** `reservation_created`, `reservation_cancelled`, `reservation_arrived`, `reservation_done`, `user_updated`, `user_registered`, `occupancy_checked`, `seed_executed`
+
+### Seed
+
+| Method | Route | Access | Description |
+|---|---|---|---|
+| POST | `/api/seed` | development/test only | Reset database with demo data |
+
+## Role System
+
+| Role | Description |
+|---|---|
+| `admin` | Full access: user management, spots, reservations and logs |
+| `employee` | Can check occupancy and manage vehicle arrivals/departures |
+| `client` | Can create and cancel their own reservations |
+
+To authenticate requests, include the JWT token in the header:
+```
+Authorization: Bearer <token>
+```
+
+## Database Architecture
+
+### PostgreSQL (business entities)
+
+```
+User ──────── Reservation ──────── ParkingSpot
+              (userId FK)          (spotId FK)
+```
+
+**Tables:** `user`, `reservations`, `parking_spots`
+
+### MongoDB (activity logs)
+
+**Collection:** `activitylogs`
+
+```json
+{
+  "type": "reservation_created",
+  "user": { "id": "...", "name": "...", "email": "..." },
+  "details": { ... },
+  "createdAt": "..."
+}
+```
+
+## Tests
+
+### Run e2e tests
+
+```bash
+yarn test:e2e
+```
+
+The e2e tests cover the 3 main use cases:
+- **UC1**: Reserve a parking spot (`test/reservation.e2e-spec.ts`)
+- **UC2**: Check parking occupancy (`test/occupancy.e2e-spec.ts`)
+- **UC3**: Update user details (`test/users.e2e-spec.ts`)
+
+Tests use the `parking_test_db` database (separate from development) and automatically run the seed before each suite.
+
+## Project Structure
+
+```
+src/
+  auth/           — JWT authentication, strategy, decorators
+  users/          — User CRUD
+  parking-spot/   — Spot CRUD + occupancy query
+  reservation/    — Reservation management and business logic
+  logs/           — Activity logging in MongoDB
+  seed/           — Initial data for development and testing
+  common/         — Shared guards, decorators, enums
+test/
+  reservation.e2e-spec.ts
+  occupancy.e2e-spec.ts
+  users.e2e-spec.ts
+docker/
+  init-db.sh      — Database initialization script
+```
