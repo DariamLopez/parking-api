@@ -15,7 +15,6 @@ export class updateUserDto {
   @IsOptional()
   phone?: string;
 
-  // @IsString()
   @IsEnum(ValidRoles, { each: true })
   @IsOptional()
   roles?: string[];

@@ -53,10 +53,7 @@ export function validateCancelWindows(reservation: Reservation): void {
   const { today, currentMinute } = getCurrentDayAndMinute();
   const reservationDate = new Date(reservation.date);
   const isToday = isSameDay(reservationDate, today);
-  console.log({
-    resDate: new Date(reservation.date).getTime(),
-    today: today.getTime(),
-  });
+
   if (new Date(reservation.date).getTime() < today.getTime())
     throw new BadRequestException("You can't cancel reservations in the past");
   // cancellation close 120 minutes before the reservation start time
@@ -70,10 +67,7 @@ export function validateArrivedWindows(reservation: Reservation): void {
   const { today, currentMinute } = getCurrentDayAndMinute();
   const reservationDate = new Date(reservation.date);
   const isToday = isSameDay(reservationDate, today);
-  console.log({
-    currentMinute,
-    reservationStartMinute: reservation.startMinute,
-  });
+
   if (
     !isToday ||
     reservation.startMinute > currentMinute ||

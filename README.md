@@ -47,6 +47,7 @@ Edit `.env` with your values. See [Environment Variables](#environment-variables
 ```bash
 docker compose up -d
 ```
+> ⚠️ Before running `docker compose up -d` for the first time, make sure `docker/init-db.sh` uses **LF** line endings (not CRLF). In VS Code, open the file, click on `CRLF` in the bottom-right status bar and select `LF`, then save. Without this, the test database `parking_test_db` will not be created on Windows.
 
 This starts:
 - **PostgreSQL** on the configured port (default 5432), with `parking_db` and `parking_test_db` databases

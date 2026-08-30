@@ -60,7 +60,6 @@ export class ReservationController {
   @Delete(':id')
   @Auth(ValidRoles.client, ValidRoles.admin)
   cancel(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: User) {
-    // return this.reservationService.defragment(id);
     return this.reservationService.cancel(id, user);
   }
 }

@@ -42,7 +42,6 @@ export class AuthService {
         ...userWithoutPassword,
       };
     } catch (error) {
-      console.error(error);
       this.handleDbError(error);
     }
   }
@@ -85,7 +84,6 @@ export class AuthService {
     if ((error as { code: string }).code === '23505') {
       throw new BadRequestException((error as { detail: string }).detail);
     }
-    console.error(error);
     throw new InternalServerErrorException(
       'Unexpected error, check server logs',
     );

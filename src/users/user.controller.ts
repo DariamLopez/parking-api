@@ -25,7 +25,6 @@ export class UserController {
     return this.userService.findAll(paginationDto);
   }
 
-  //TODO User con sus reservas
   @Get('me')
   @Auth()
   getProfile(@GetUser() user: User) {
