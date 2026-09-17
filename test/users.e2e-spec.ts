@@ -78,7 +78,6 @@ describe('CU3: Actualizar detalles de un usuario (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'Updated Client', phone: '600123456', roles: ['employee'] })
       .expect(200);
-    console.log(res.body);
     expect(res.body.name).toBe('Updated Client');
     expect(res.body.phone).toBe('600123456');
     expect(res.body.email).toBe('client@parking.com');
